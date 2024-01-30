@@ -12,10 +12,3 @@ variable "common_tags" {
   type    = map(string)
   default = {}
 }
-
-variable "ssh_public_key" {
-  description = "SSH public key"
-  type        = string
-  default     = "${{ secrets.SSH_PUBLIC_KEY }}"
-}
-
