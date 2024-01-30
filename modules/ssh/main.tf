@@ -3,11 +3,26 @@ resource "random_pet" "ssh_key_name" {
   separator = ""
 }
 
-resource "azurerm_ssh_public_key" "ssh_key_pair" {
-  name                 = random_pet.ssh_key_name.id
-  resource_group_name  = var.resource_group_name
-  location             = var.resource_group_location
-  public_key           = var.ssh_public_key
+data "azurerm_resource_group" "rg" {
+  name     = var.resource_group_name
+}
 
-  tags                 = var.common_tags
+resource "azapi_resource_action" "ssh_public_key_gen" {
+  type        = "Microsoft.Compute/sshPublicKeys@2022-11-01"
+  resource_id = azapi_resource.ssh_public_key.id
+  action      = "generateKeyPair"
+  method      = "POST"
+
+  response_export_values = ["publicKey", "privateKey"]
+}
+
+resource "azapi_resource" "ssh_public_key" {
+  type      = "Microsoft.Compute/sshPublicKeys@2022-11-01"
+  name      = random_pet.ssh_key_name.id
+  location                 = var.resource_group_location
+  parent_id = data.azurerm_resource_group.rg.id
+}
+
+output "key_data" {
+  value = jsondecode(azapi_resource_action.ssh_public_key_gen.output).publicKey
 }
